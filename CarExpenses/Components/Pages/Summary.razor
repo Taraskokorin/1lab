@@ -1,0 +1,82 @@
+@page "/summary"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Data
+@using CarExpenses.Services
+@inject IDbContextFactory<CarExpensesContext> DbFactory
+
+<PageTitle>Зведення</PageTitle>
+<h1>Зведення</h1>
+
+@if (total.Count == 0)
+{
+    <div class="alert alert-info">
+        Витрат ще немає, тому підсумовувати нема чого.
+        <a href="/carexpenses/create">Додайте першу витрату</a>.
+    </div>
+}
+else
+{
+    <h2>За автомобілями</h2>
+    <table class="table">
+        <thead><tr><th>Автомобіль</th><th>Кількість</th><th>Сума, грн</th></tr></thead>
+        <tbody>
+        @foreach (var r in byVehicle)
+        {
+            <tr><td>@r.Name</td><td>@r.Count</td><td>@r.Total.ToString("N2")</td></tr>
+        }
+        </tbody>
+        <tfoot>
+            <tr class="table-secondary fw-bold">
+                <td>@total.Name</td><td>@total.Count</td><td>@total.Total.ToString("N2")</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <h2>За місяцями</h2>
+    <table class="table">
+        <thead><tr><th>Період</th><th>Кількість</th><th>Сума, грн</th></tr></thead>
+        <tbody>
+        @foreach (var r in byMonth)
+        {
+            <tr><td>@r.Name</td><td>@r.Count</td><td>@r.Total.ToString("N2")</td></tr>
+        }
+        </tbody>
+    </table>
+
+    <h2>Пальне й вартість кілометра</h2>
+    <table class="table">
+        <thead>
+            <tr><th>Автомобіль</th><th>Пробіг, км</th><th>Залито, л</th><th>л/100 км</th><th>Пальне, грн</th><th>Грн за км</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var r in fuel)
+        {
+            <tr>
+                <td>@r.Vehicle</td>
+                <td>@r.Distance</td>
+                <td>@r.Liters.ToString("0.#")</td>
+                <td>@(r.LitersPer100Km?.ToString("0.0") ?? "—")</td>
+                <td>@r.FuelCost.ToString("N2")</td>
+                <td>@(r.CostPerKm?.ToString("0.00") ?? "—")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <p class="text-body-secondary small">Пробіг – різниця між найбільшим і найменшим показником одометра у витратах автомобіля; грн за км враховує всі витрати, а не лише пальне.</p>
+}
+
+@code {
+    private List<SummaryRow> byVehicle = new();
+    private List<SummaryRow> byMonth = new();
+    private List<FuelRow> fuel = new();
+    private SummaryRow total = new("Усього", 0, 0m);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        byVehicle = await SummaryCalculator.ByVehicleAsync(db.CarExpenses);
+        byMonth   = await SummaryCalculator.ByMonthAsync(db.CarExpenses);
+        total     = await SummaryCalculator.TotalAsync(db.CarExpenses);
+        fuel      = await SummaryCalculator.FuelByVehicleAsync(db.CarExpenses);
+    }
+}
