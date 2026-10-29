@@ -75,6 +75,17 @@ classDiagram
 |---|---|---|
 | ![Зведення](docs/summary.png) | ![Форма нової витрати](docs/create-form.png) | ![Перелік на телефоні](docs/mobile-list.png) |
 
+## Вебсервіс
+
+| Адреса | Що повертає |
+|---|---|
+| `GET /api/carexpenses` | усі витрати у форматі JSON, нові спершу |
+| `GET /api/carexpenses/{id}` | одну витрату; 404, якщо такої немає |
+| `GET /api/summary` | зведення за автомобілями: кількість і сума витрат |
+| `GET /export/carexpenses.csv?search=…&vehicleId=…` | звіт у CSV (особливість проєкту); те саме дає кнопка «Завантажити CSV» на сторінці витрат |
+
+Опис інтерфейсу OpenAPI: `/openapi/v1.json`, сторінка перегляду — `/scalar` (лише в середовищі Development). Приклади запитів — у файлі `CarExpenses/CarExpenses.http`.
+
 ## Як запустити
 
 Потрібен .NET SDK 10.

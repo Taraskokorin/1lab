@@ -1,0 +1,16 @@
+@host = http://localhost:5185
+
+### Перелік витрат
+GET {{host}}/api/carexpenses
+
+### Одна витрата
+GET {{host}}/api/carexpenses/1
+
+### Неіснуюча витрата – очікується 404
+GET {{host}}/api/carexpenses/99999
+
+### Зведення за автомобілями
+GET {{host}}/api/summary
+
+### Особливість проєкту: експорт у CSV (з умовами відбору)
+GET {{host}}/export/carexpenses.csv?search=заправка&vehicleId=1

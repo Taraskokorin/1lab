@@ -16,6 +16,7 @@
 
 <p>
     <a class="btn btn-primary" href="carexpenses/create">Додати витрату</a>
+    <a class="btn btn-outline-secondary ms-2" href="@ExportUrl">Завантажити CSV</a>
 </p>
 
 <form method="get" class="row g-2 mb-3 row-cols-1 row-cols-md-auto">
@@ -137,6 +138,10 @@ else
 
         return await q.ToListAsync();
     }
+
+    // Експорт бере ті самі умови відбору, що й перелік на екрані.
+    private string ExportUrl =>
+        $"export/carexpenses.csv?search={Uri.EscapeDataString(Search ?? "")}&vehicleId={VehicleId}";
 
     private string PageUrl(int page) =>
         $"carexpenses?page={page}&search={Uri.EscapeDataString(Search ?? "")}&vehicleId={VehicleId}&sort={Sort}";

@@ -231,6 +231,37 @@
 5. Кожна вкладка має назву розділу й назву застосунку, наприклад «Витрати – Облік автомобіля».
 6. `table-responsive` (прокручується лише таблиця) і приховування другорядних стовпців класами `d-none d-…-table-cell`.
 
+## ЛР 11. Вебсервіс і OpenAPI
+
+- **Пакети:** `Microsoft.AspNetCore.OpenApi` (10.*) і `Scalar.AspNetCore` (2.18.5).
+- **Тип для передавання даних** `Api/CarExpenseDto` (record) містить лише потрібні клієнтові поля, а автомобіль і місце в ньому — назвами, без навігаційних властивостей. Так у JSON немає циклічних посилань, і назовні не виходить службова `TitleSearch`.
+- **Група `/api` у `Program.cs`:**
+  - `GET /api/carexpenses` — перелік витрат, нові спершу;
+  - `GET /api/carexpenses/{id}` — одна витрата; `Results<Ok<CarExpenseDto>, NotFound>` → 404, якщо такої немає;
+  - `GET /api/summary` — зведення за автомобілями (`SummaryRow` з ЛР 9).
+- **Відповідь 404.** Шаблон мав `UseStatusCodePagesWithReExecute("/not-found")`, і порожній 404 вебсервісу підмінявся б HTML-сторінкою. Тому сторінку «не знайдено» ввімкнено лише для адрес поза `/api` (`UseWhen`), і вебсервіс віддає чистий код 404.
+- **Опис OpenAPI** (`/openapi/v1.json`) і сторінка перегляду Scalar (`/scalar`) підключені лише в середовищі Development.
+- **Особливість проєкту — експорт у CSV:** `GET /export/carexpenses.csv?search=…&vehicleId=…`, кнопка «Завантажити CSV» на сторінці переліку.
+  - Код лежить у `Services/CsvExporter.cs`. Роздільник — `;`, числа з комою, на початку стоїть BOM, тож Excel з українськими налаштуваннями відкриває файл одразу з кирилицею. Значення з `;` або лапками беруться в лапки за правилами CSV.
+  - Експорт враховує ті самі умови пошуку й фільтра, що й перелік на екрані.
+  - Ця точка — не частина вебсервісу (`ExcludeFromDescription`), а файл для людини.
+- **Перевірка** (запити з `CarExpenses.http`, виконані curl-ом):
+  - `/api/carexpenses` → 200, JSON-масив;
+  - `/api/carexpenses/1` → 200, одна витрата;
+  - `/api/carexpenses/99999` → **404** без тіла;
+  - `/api/summary` → 200, `[{"name":"Skoda Octavia","count":11,"total":15435},…]`;
+  - `/openapi/v1.json` → 200;
+  - `/scalar` → 200 (через перенаправлення на `/scalar/`);
+  - CSV → 200, `text/csv`, `attachment; filename=car-expenses-2026-10-29.csv`, перший рядок — заголовки українською.
+
+### Відповіді на «Перевірте себе»
+1. Вебсервіс віддає дані (JSON) для іншої програми: мобільного клієнта, звіту чи стороннього сервісу. Сторінка ж віддає HTML для людини.
+2. Тип предметної області має навігаційні властивості (цикли в JSON) і службові поля, які назовні не потрібні. DTO містить рівно потрібне.
+3. `Program.cs` складається з інструкцій верхнього рівня, і оголошення типу перед ними дає помилку CS8803.
+4. Фабрику контекстів підставляє платформа: це параметр функції кінцевої точки, який береться з контейнера служб.
+5. 404 означає «ресурс не знайдено». `TypedResults` дає типізований результат, тож його вигляд сам потрапляє в опис OpenAPI; `Results` повертає просто `IResult`.
+6. У `/openapi/v1.json` точка `/api/carexpenses/{id}` має відповіді 200 зі схемою `CarExpenseDto` і 404. Їх узято з типу повернення `Results<Ok<CarExpenseDto>, NotFound>`.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
@@ -256,4 +287,7 @@
 - https://learn.microsoft.com/aspnet/core/blazor/components/layouts
 - https://learn.microsoft.com/aspnet/core/blazor/components/css-isolation
 - https://getbootstrap.com/docs/
+- https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis/overview
+- https://learn.microsoft.com/aspnet/core/fundamentals/openapi/overview
+- https://guides.scalar.com/scalar/scalar-api-references/net-integration
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.
