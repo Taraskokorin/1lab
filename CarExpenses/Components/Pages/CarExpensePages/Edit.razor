@@ -5,15 +5,13 @@
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Редагування витрати – Облік автомобіля</PageTitle>
 
-<h1>Edit</h1>
+<h1>Редагування витрати</h1>
 
-<h2>CarExpense</h2>
-<hr />
 @if (CarExpense is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Завантаження…</em></p>
 }
 else
 {
@@ -28,16 +26,16 @@ else
                 }
                 <input type="hidden" name="CarExpense.Id" value="@CarExpense.Id" />
                 <div class="mb-3">
-                    <label for="title" class="form-label">Title:</label>
+                    <label for="title" class="form-label">Що оплачено:</label>
                     <InputText id="title" @bind-Value="CarExpense.Title" class="form-control" />
                     <ValidationMessage For="() => CarExpense.Title" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="kind" class="form-label">Kind:</label>
+                    <label for="kind" class="form-label">Вид витрати:</label>
                     <InputSelect id="kind" @bind-Value="CarExpense.Kind" class="form-select">
                     @foreach (var kind in Enum.GetValues<ExpenseKind>())
                     {
-                        <option value="@kind">@kind</option>
+                        <option value="@kind">@kind.ToUkrainian()</option>
                     }
                 </InputSelect>
                     <ValidationMessage For="() => CarExpense.Kind" class="text-danger" />
@@ -61,43 +59,43 @@ else
                     </InputSelect>
                 </div>
                 <div class="mb-3">
-                    <label for="amount" class="form-label">Amount:</label>
+                    <label for="amount" class="form-label">Сума, грн:</label>
                     <InputNumber id="amount" @bind-Value="CarExpense.Amount" class="form-control" />
                     <ValidationMessage For="() => CarExpense.Amount" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="spenton" class="form-label">SpentOn:</label>
+                    <label for="spenton" class="form-label">Дата:</label>
                     <InputDate id="spenton" @bind-Value="CarExpense.SpentOn" class="form-control" />
                     <ValidationMessage For="() => CarExpense.SpentOn" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="odometer" class="form-label">Odometer:</label>
+                    <label for="odometer" class="form-label">Пробіг, км:</label>
                     <InputNumber id="odometer" @bind-Value="CarExpense.Odometer" class="form-control" />
                     <ValidationMessage For="() => CarExpense.Odometer" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="liters" class="form-label">Liters:</label>
+                    <label for="liters" class="form-label">Залито, л (лише для заправки):</label>
                     <InputNumber id="liters" @bind-Value="CarExpense.Liters" class="form-control" />
                     <ValidationMessage For="() => CarExpense.Liters" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="nextserviceon" class="form-label">NextServiceOn:</label>
+                    <label for="nextserviceon" class="form-label">Наступне ТО (якщо відомо):</label>
                     <InputDate id="nextserviceon" @bind-Value="CarExpense.NextServiceOn" class="form-control" />
                     <ValidationMessage For="() => CarExpense.NextServiceOn" class="text-danger" />
                 </div>
                 <div class="mb-3">
-                    <label for="comment" class="form-label">Comment:</label>
+                    <label for="comment" class="form-label">Коментар:</label>
                     <InputText id="comment" @bind-Value="CarExpense.Comment" class="form-control" />
                     <ValidationMessage For="() => CarExpense.Comment" class="text-danger" />
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary">Зберегти</button>
             </EditForm>
         </div>
     </div>
 }
 
 <div>
-    <a href="/carexpenses">Back to List</a>
+    <a href="/carexpenses">До переліку</a>
 </div>
 
 @code {
@@ -140,7 +138,7 @@ else
 
         if (CarExpense.Liters is not null && CarExpense.Kind != ExpenseKind.Fuel)
         {
-            error = "Літри зазначають лише для заправки: оберіть вид «Fuel» або очистіть поле";
+            error = "Літри зазначають лише для заправки: оберіть вид «Пальне» або очистіть поле";
             return;
         }
 
@@ -170,7 +168,7 @@ else
             }
         }
 
-        NavigationManager.NavigateTo("/carexpenses");
+        NavigationManager.NavigateTo("/carexpenses?saved=true");
     }
 
     private async Task<bool> CarExpenseExistsAsync(int id)

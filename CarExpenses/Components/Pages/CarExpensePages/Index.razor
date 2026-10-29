@@ -5,15 +5,20 @@
 @using CarExpenses.Data
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Витрати – Облік автомобіля</PageTitle>
 
-<h1>Index</h1>
+<h1>Витрати на автомобіль</h1>
+
+@if (Saved)
+{
+    <div class="alert alert-success">Запис збережено</div>
+}
 
 <p>
-    <a href="carexpenses/create">Create New</a>
+    <a class="btn btn-primary" href="carexpenses/create">Додати витрату</a>
 </p>
 
-<form method="get" class="row g-2 mb-3">
+<form method="get" class="row g-2 mb-3 row-cols-1 row-cols-md-auto">
   <div class="col">
     <input name="search" value="@Search" class="form-control"
            placeholder="Пошук за описом" />
@@ -39,29 +44,47 @@
   </div>
 </form>
 
+@if (!expenses.Any())
+{
+    <div class="alert alert-info">
+        @if (Filtered)
+        {
+            <span>За цими умовами витрат не знайдено. <a href="carexpenses">Скинути пошук</a>.</span>
+        }
+        else
+        {
+            <span>Витрат ще немає. <a href="carexpenses/create">Додайте першу витрату</a> – наприклад, останню заправку.</span>
+        }
+    </div>
+}
+else
+{
+<div class="table-responsive">
 <QuickGrid Class="table" Items="@expenses.Skip((CurrentPage - 1) * PageSize).Take(PageSize).AsQueryable()">
-    <PropertyColumn Property="carexpense => carexpense.Title" />
-    <PropertyColumn Property="carexpense => carexpense.Kind" />
-    <PropertyColumn Property="carexpense => carexpense.Amount" />
-    <PropertyColumn Property="carexpense => carexpense.SpentOn" />
-    <PropertyColumn Property="carexpense => carexpense.Odometer" />
-    <PropertyColumn Property="carexpense => carexpense.Liters" />
-    <PropertyColumn Property="carexpense => carexpense.NextServiceOn" />
-    <PropertyColumn Property="carexpense => carexpense.Comment" />
-    <PropertyColumn Property="carexpense => carexpense.Vehicle!.Name" Title="Автомобіль" />
-    <PropertyColumn Property="carexpense => carexpense.Place!.Name" Title="Місце" />
+    <PropertyColumn Property="carexpense => carexpense.SpentOn" Title="Дата" Format="dd.MM.yyyy" />
+    @* Назва веде на подробиці – окреме посилання «Подробиці» не потрібне. *@
+    <TemplateColumn Title="Що оплачено" Context="carexpense">
+        <a href="@($"carexpenses/details?id={carexpense.Id}")">@carexpense.Title</a>
+    </TemplateColumn>
+    <TemplateColumn Title="Вид" Class="d-none d-md-table-cell" Context="carexpense">@carexpense.Kind.ToUkrainian()</TemplateColumn>
+    <PropertyColumn Property="carexpense => carexpense.Amount" Title="Сума, грн" Format="N2" Class="text-nowrap" />
+    <PropertyColumn Property="carexpense => carexpense.Odometer" Title="Пробіг, км" Class="d-none d-md-table-cell" />
+    <PropertyColumn Property="carexpense => carexpense.Liters" Title="Літри" Class="d-none d-xxl-table-cell" />
+    <PropertyColumn Property="carexpense => carexpense.Vehicle!.Name" Title="Автомобіль" Class="d-none d-md-table-cell" />
+    <PropertyColumn Property="carexpense => carexpense.Place!.Name" Title="Місце" Class="d-none d-xl-table-cell" />
 
-    <TemplateColumn Context="carexpense">
-        <a href="@($"carexpenses/edit?id={carexpense.Id}")">Edit</a> |
-        <a href="@($"carexpenses/details?id={carexpense.Id}")">Details</a> |
-        <a href="@($"carexpenses/delete?id={carexpense.Id}")">Delete</a>
+    <TemplateColumn Class="text-nowrap" Context="carexpense">
+        <a href="@($"carexpenses/edit?id={carexpense.Id}")">Змінити</a> |
+        <a href="@($"carexpenses/delete?id={carexpense.Id}")">Видалити</a>
     </TemplateColumn>
 </QuickGrid>
+</div>
 <nav>
 @if (CurrentPage > 1) { <a class="btn btn-outline-secondary" href="@PageUrl(CurrentPage - 1)">Назад</a> }
 <span class="mx-2">Сторінка @CurrentPage</span>
 @if (expenses.Count > CurrentPage * PageSize) { <a class="btn btn-outline-secondary" href="@PageUrl(CurrentPage + 1)">Далі</a> }
 </nav>
+}
 
 @code {
     private const int PageSize = 10;
@@ -71,6 +94,11 @@
     [SupplyParameterFromQuery] public string? Search { get; set; }
     [SupplyParameterFromQuery] public int? VehicleId { get; set; }
     [SupplyParameterFromQuery] public string? Sort { get; set; }
+
+    [SupplyParameterFromQuery(Name = "saved")]
+    public bool Saved { get; set; }
+
+    private bool Filtered => !string.IsNullOrWhiteSpace(Search) || VehicleId is not null;
 
     private List<CarExpense> expenses = new();
     private List<Vehicle> vehicles = new();

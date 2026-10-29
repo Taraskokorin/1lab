@@ -4,15 +4,13 @@
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Edit</PageTitle>
+<PageTitle>Редагування: місце – Облік автомобіля</PageTitle>
 
-<h1>Edit</h1>
+<h1>Редагування: місце</h1>
 
-<h2>Place</h2>
-<hr />
 @if (Place is null)
 {
-    <p><em>Loading...</em></p>
+    <p><em>Завантаження…</em></p>
 }
 else
 {
@@ -24,18 +22,18 @@ else
                 <input type="hidden" name="Place.Id" value="@Place.Id" />
                 <div class="mb-3">
                 <span class="text-danger">*</span>
-                    <label for="name" class="form-label">Name:</label>
+                    <label for="name" class="form-label">Назва:</label>
                     <InputText id="name" @bind-Value="Place.Name" class="form-control" aria-required="true"/>
                     <ValidationMessage For="() => Place.Name" class="text-danger" />
                 </div>
-                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="submit" class="btn btn-primary">Зберегти</button>
             </EditForm>
         </div>
     </div>
 }
 
 <div>
-    <a href="/places">Back to List</a>
+    <a href="/places">До переліку</a>
 </div>
 
 @code {

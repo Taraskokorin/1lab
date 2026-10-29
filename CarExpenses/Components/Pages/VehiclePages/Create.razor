@@ -4,12 +4,10 @@
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Create</PageTitle>
+<PageTitle>Новий запис: автомобіль – Облік автомобіля</PageTitle>
 
-<h1>Create</h1>
+<h1>Новий запис: автомобіль</h1>
 
-<h2>Vehicle</h2>
-<hr />
 <div class="row">
     <div class="col-md-4">
         <EditForm method="post" Model="Vehicle" OnValidSubmit="AddVehicle" FormName="create" Enhance>
@@ -17,22 +15,22 @@
             <ValidationSummary class="text-danger" role="alert"/>
             <div class="mb-3">
                 <span class="text-danger">*</span>
-                <label for="name" class="form-label">Name:</label> 
+                <label for="name" class="form-label">Назва:</label> 
                 <InputText id="name" @bind-Value="Vehicle.Name" class="form-control" aria-required="true"/> 
                 <ValidationMessage For="() => Vehicle.Name" class="text-danger" /> 
             </div>        
             <div class="mb-3">
-                <label for="platenumber" class="form-label">PlateNumber:</label> 
+                <label for="platenumber" class="form-label">Номерний знак:</label> 
                 <InputText id="platenumber" @bind-Value="Vehicle.PlateNumber" class="form-control" /> 
                 <ValidationMessage For="() => Vehicle.PlateNumber" class="text-danger" /> 
             </div>        
-            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="submit" class="btn btn-primary">Зберегти</button>
         </EditForm>
     </div>
 </div>
 
 <div>
-    <a href="/vehicles">Back to List</a>
+    <a href="/vehicles">До переліку</a>
 </div>
 
 @code {

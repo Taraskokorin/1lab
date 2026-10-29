@@ -6,22 +6,22 @@
 @implements IAsyncDisposable
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Автомобілі – Облік автомобіля</PageTitle>
 
-<h1>Index</h1>
+<h1>Автомобілі</h1>
 
 <p>
-    <a href="vehicles/create">Create New</a>
+    <a href="vehicles/create">Додати</a>
 </p>
 
 <QuickGrid Class="table" Items="context.Vehicles">
-    <PropertyColumn Property="vehicle => vehicle.Name" />
-    <PropertyColumn Property="vehicle => vehicle.PlateNumber" />
+    <PropertyColumn Property="vehicle => vehicle.Name" Title="Назва" />
+    <PropertyColumn Property="vehicle => vehicle.PlateNumber" Title="Номерний знак" />
 
     <TemplateColumn Context="vehicle">
-        <a href="@($"vehicles/edit?id={vehicle.Id}")">Edit</a> |
-        <a href="@($"vehicles/details?id={vehicle.Id}")">Details</a> |
-        <a href="@($"vehicles/delete?id={vehicle.Id}")">Delete</a>
+        <a href="@($"vehicles/edit?id={vehicle.Id}")">Змінити</a> |
+        <a href="@($"vehicles/details?id={vehicle.Id}")">Подробиці</a> |
+        <a href="@($"vehicles/delete?id={vehicle.Id}")">Видалити</a>
     </TemplateColumn>
 </QuickGrid>
 

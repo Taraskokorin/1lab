@@ -4,22 +4,20 @@
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Витрата – Облік автомобіля</PageTitle>
 
-<h1>Details</h1>
+<h1>Подробиці витрати</h1>
 
 <div>
-    <h2>CarExpense</h2>
-    <hr />
     @if (carexpense is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>Завантаження…</em></p>
     }
     else {
         <ExpenseCard Expense="carexpense" Caption="Подробиці запису" />
         <div>
-            <a href="@($"/carexpenses/edit?id={carexpense.Id}")">Edit</a> |
-            <a href="@($"/carexpenses")">Back to List</a>
+            <a href="@($"/carexpenses/edit?id={carexpense.Id}")">Редагувати</a> |
+            <a href="@($"/carexpenses")">До переліку</a>
         </div>
     }
 </div>

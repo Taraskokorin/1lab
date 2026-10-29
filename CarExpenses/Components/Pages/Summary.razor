@@ -4,7 +4,7 @@
 @using CarExpenses.Services
 @inject IDbContextFactory<CarExpensesContext> DbFactory
 
-<PageTitle>Зведення</PageTitle>
+<PageTitle>Зведення – Облік автомобіля</PageTitle>
 <h1>Зведення</h1>
 
 @if (total.Count == 0)
@@ -17,7 +17,7 @@
 else
 {
     <h2>За автомобілями</h2>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
         <thead><tr><th>Автомобіль</th><th>Кількість</th><th>Сума, грн</th></tr></thead>
         <tbody>
         @foreach (var r in byVehicle)
@@ -30,10 +30,10 @@ else
                 <td>@total.Name</td><td>@total.Count</td><td>@total.Total.ToString("N2")</td>
             </tr>
         </tfoot>
-    </table>
+    </table></div>
 
     <h2>За місяцями</h2>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
         <thead><tr><th>Період</th><th>Кількість</th><th>Сума, грн</th></tr></thead>
         <tbody>
         @foreach (var r in byMonth)
@@ -41,10 +41,10 @@ else
             <tr><td>@r.Name</td><td>@r.Count</td><td>@r.Total.ToString("N2")</td></tr>
         }
         </tbody>
-    </table>
+    </table></div>
 
     <h2>Пальне й вартість кілометра</h2>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
         <thead>
             <tr><th>Автомобіль</th><th>Пробіг, км</th><th>Залито, л</th><th>л/100 км</th><th>Пальне, грн</th><th>Грн за км</th></tr>
         </thead>
@@ -61,7 +61,7 @@ else
             </tr>
         }
         </tbody>
-    </table>
+    </table></div>
     <p class="text-body-secondary small">Пробіг – різниця між найбільшим і найменшим показником одометра у витратах автомобіля; грн за км враховує всі витрати, а не лише пальне.</p>
 }
 

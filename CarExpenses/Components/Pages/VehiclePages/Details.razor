@@ -4,27 +4,25 @@
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
-<PageTitle>Details</PageTitle>
+<PageTitle>Подробиці: автомобіль – Облік автомобіля</PageTitle>
 
-<h1>Details</h1>
+<h1>Подробиці: автомобіль</h1>
 
 <div>
-    <h2>Vehicle</h2>
-    <hr />
     @if (vehicle is null)
     {
-        <p><em>Loading...</em></p>
+        <p><em>Завантаження…</em></p>
     }
     else {
         <dl class="row">
-            <dt class="col-sm-2">Name</dt>
+            <dt class="col-sm-2">Назва</dt>
             <dd class="col-sm-10">@vehicle.Name</dd>
-            <dt class="col-sm-2">PlateNumber</dt>
+            <dt class="col-sm-2">Номерний знак</dt>
             <dd class="col-sm-10">@vehicle.PlateNumber</dd>
         </dl>
         <div>
-            <a href="@($"/vehicles/edit?id={vehicle.Id}")">Edit</a> |
-            <a href="@($"/vehicles")">Back to List</a>
+            <a href="@($"/vehicles/edit?id={vehicle.Id}")">Змінити</a> |
+            <a href="@($"/vehicles")">До переліку</a>
         </div>
     }
 </div>
