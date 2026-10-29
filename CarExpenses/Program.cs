@@ -1,9 +1,16 @@
+using Microsoft.EntityFrameworkCore;
 using CarExpenses.Components;
+using CarExpenses.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents();
+
+builder.Services.AddDbContextFactory<CarExpensesContext>(o =>
+    o.UseSqlite("Data Source=carexpenses.db"));   // тимчасово; у ЛР 13
+                                                  // винесемо до appsettings.json
+builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 var app = builder.Build();
 

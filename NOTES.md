@@ -36,10 +36,31 @@
 5. `DateOnly`, бо час витрати не потрібен; `DateTime` змусив би зберігати й порівнювати зайві години.
 6. `enum` доречний для сталого переліку станів: компілятор не дасть записати значення, якого немає, і групування буде надійним.
 
+## ЛР 3. Entity Framework Core і SQLite
+
+- Додано пакети `Microsoft.EntityFrameworkCore.Sqlite`, `…Design`, `Microsoft.VisualStudio.Web.CodeGeneration.Design`, `QuickGrid` і `QuickGrid.EntityFrameworkAdapter` (версії `10.*`).
+- Засоби `dotnet-ef` і `dotnet-aspnet-codegenerator` встановлено в локальний маніфест. SDK 10 створив його як `dotnet-tools.json` у кореневому каталозі (а не в `.config/`, як у методичці) — працює так само, версії зафіксовані в репозиторії.
+- Контекст `Data/CarExpensesContext.cs` має `DbSet<CarExpense> CarExpenses`. Фабрику контекстів зареєстровано в `Program.cs` (`AddDbContextFactory`, рядок підключення `Data Source=carexpenses.db`), там само `AddQuickGridEntityFrameworkAdapter()`.
+- **Перетворення decimal потрібне**: у моделі є `Amount` і `Liters`. Без `HasConversion<double>()` SQLite зберігав би їх текстом — сортування за сумою стало б лексикографічним («1000» < «200»), а `Sum` у запиті до бази не працював би.
+- Міграцію `Init` створено й застосовано; у `carexpenses.db` таблиця `CarExpenses` має стовпці за всіма властивостями (`Amount`/`Liters` — `REAL`, дати — `TEXT`, `Liters`/`NextServiceOn`/`Comment` — `NULL`-допустимі).
+- Збирання дає попередження NU1901 про низьку вразливість у `NuGet.Packaging` — це транзитивна залежність пакета генератора сторінок, на роботу застосунку не впливає.
+
+### Відповіді на «Перевірте себе»
+1. Клас-нащадок `DbContext` описує базу: кожна властивість `DbSet` — одна таблиця, тому їх стільки ж, скільки таблиць.
+2. Контекст не можна використовувати кількома операціями одночасно; фабрика видає окремий короткоживучий контекст на кожну операцію. Саме фабрику очікують згенеровані сторінки.
+3. SQLite не має десяткового типу, тож без перетворення `decimal` зберігався б текстом: хибне сортування й неможливе підсумовування базою.
+4. Ні, у C# властивість лишається `decimal`, змінюється лише спосіб зберігання.
+5. Міграція — код C#, що описує зміни схеми; база — файл із даними. У репозиторії зберігають міграції, а файл бази — ні.
+6. Код і схема розійдуться: запити звертатимуться до стовпців, яких у базі немає, і застосунок упаде під час виконання.
+7. Зупинити застосунок, видалити `carexpenses.db` (і `-shm`, `-wal`), виконати `dotnet ef database update` — база створиться заново з усіма міграціями.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
 - https://learn.microsoft.com/aspnet/core/blazor/components/render-modes
 - https://learn.microsoft.com/dotnet/csharp/language-reference/builtin-types/
 - https://learn.microsoft.com/dotnet/csharp/nullable-references
+- https://learn.microsoft.com/ef/core/
+- https://learn.microsoft.com/ef/core/managing-schemas/migrations/
+- https://learn.microsoft.com/ef/core/providers/sqlite/limitations
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.
