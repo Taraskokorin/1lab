@@ -16,24 +16,7 @@
         <p><em>Loading...</em></p>
     }
     else {
-        <dl class="row">
-            <dt class="col-sm-2">Title</dt>
-            <dd class="col-sm-10">@carexpense.Title</dd>
-            <dt class="col-sm-2">Kind</dt>
-            <dd class="col-sm-10">@carexpense.Kind</dd>
-            <dt class="col-sm-2">Amount</dt>
-            <dd class="col-sm-10">@carexpense.Amount</dd>
-            <dt class="col-sm-2">SpentOn</dt>
-            <dd class="col-sm-10">@carexpense.SpentOn</dd>
-            <dt class="col-sm-2">Odometer</dt>
-            <dd class="col-sm-10">@carexpense.Odometer</dd>
-            <dt class="col-sm-2">Liters</dt>
-            <dd class="col-sm-10">@carexpense.Liters</dd>
-            <dt class="col-sm-2">NextServiceOn</dt>
-            <dd class="col-sm-10">@carexpense.NextServiceOn</dd>
-            <dt class="col-sm-2">Comment</dt>
-            <dd class="col-sm-10">@carexpense.Comment</dd>
-        </dl>
+        <ExpenseCard Expense="carexpense" Caption="Подробиці запису" />
         <div>
             <a href="@($"/carexpenses/edit?id={carexpense.Id}")">Edit</a> |
             <a href="@($"/carexpenses")">Back to List</a>

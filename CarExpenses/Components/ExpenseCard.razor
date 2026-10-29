@@ -1,0 +1,38 @@
+<div class="card mb-3">
+  <div class="card-body">
+    @if (Caption is not null)
+    {
+        <h6 class="card-subtitle mb-2 text-body-secondary">@Caption</h6>
+    }
+    <h5 class="card-title">@Expense.Title</h5>
+    <p class="card-text mb-1">
+        <span class="badge bg-secondary">@Expense.Kind.ToUkrainian()</span>
+        <strong class="ms-2">@Expense.Amount.ToString("0.00") грн</strong>
+        <span class="ms-2">@Expense.SpentOn.ToString("dd.MM.yyyy")</span>
+    </p>
+    <p class="card-text mb-1">Пробіг: @Expense.Odometer км</p>
+    @if (ShowDetails)
+    {
+        @if (Expense.Liters is decimal liters)
+        {
+            <p class="card-text mb-1">Залито: @liters.ToString("0.##") л</p>
+        }
+        @if (Expense.NextServiceOn is DateOnly next)
+        {
+            <p class="card-text mb-1">Наступне ТО: @next.ToString("dd.MM.yyyy")</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Expense.Comment))
+        {
+            <p class="card-text text-body-secondary">@Expense.Comment</p>
+        }
+    }
+  </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public CarExpense Expense { get; set; } = default!;
+
+    [Parameter] public string? Caption { get; set; }
+    [Parameter] public bool ShowDetails { get; set; } = true;
+}
