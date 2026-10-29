@@ -262,6 +262,32 @@
 5. 404 означає «ресурс не знайдено». `TypedResults` дає типізований результат, тож його вигляд сам потрапляє в опис OpenAPI; `Results` повертає просто `IResult`.
 6. У `/openapi/v1.json` точка `/api/carexpenses/{id}` має відповіді 200 зі схемою `CarExpenseDto` і 404. Їх узято з типу повернення `Results<Ok<CarExpenseDto>, NotFound>`.
 
+## ЛР 12. Модульні тести xUnit
+
+- Будова дворівнева, як і задумано в ЛР 1. У кореневому каталозі лежать розв'язок `CarExpenses.slnx`, застосунок `CarExpenses/` і тести `CarExpenses.Tests/`. SDK 10 створює розв'язок у новому форматі `.slnx` (а не `.sln`); `dotnet build` і `dotnet test` збирають обидва проєкти разом.
+- Проєкт тестів створено шаблоном `dotnet new xunit`, посилання на застосунок і пакет `Microsoft.EntityFrameworkCore.Sqlite` додано. Шаблон SDK 10.0.401 поставив xUnit 2.9.3, а не v3, як у методичці; для цих тестів різниці немає.
+- Тести обчислень працюють на справжньому контексті EF Core з SQLite у пам'яті (`Data Source=:memory:`). З'єднання відкривається в конструкторі й закривається в `Dispose`, тож кожен тест починає з чистої бази. Допоміжний метод `Expense(...)` задає всі обов'язкові поля й довідники, щоб тест не впав на зовнішньому ключі.
+- **`SummaryCalculatorTests`** (9 тестів):
+  - `ByVehicleForEmptySetReturnsNoRows` — межовий випадок: порожня вибірка дає порожній результат;
+  - `TotalForEmptySetIsZero` — на порожній базі Count і Sum дорівнюють 0, без винятку;
+  - `ExpensesOfOneVehicleMergeIntoSingleRow` — дві витрати одного авто злилися в один рядок;
+  - `TotalEqualsSumOfAmounts` — 1450,50 + 350 + 120,25 = 1920,75;
+  - `ExpensesOfDifferentMonthsGoToDifferentRows` — 30.09 і 01.10 потрапили в різні місяці;
+  - `SingleExpenseGivesExactlyOneRowWithCountOne`;
+  - `VehiclesAreOrderedByTotalDescending`;
+  - `FuelConsumptionIsLitersPerHundredKilometres` — 60 л на 1000 км дають 6 л/100 км і 5 грн/км;
+  - `FuelRowWithoutMileageHasNoConsumption` — без пробігу витрата на 100 км не рахується (`null`), ділення на нуль немає.
+- **`CsvExporterTests`** (4 тести): заголовок українською; `[Theory]` з трьома описами — з `;`, з лапками й звичайний — перевіряє екранування CSV.
+- **`dotnet test`** у кореневому каталозі: пройдено 13, не пройдено 0.
+
+### Відповіді на «Перевірте себе»
+1. Модульний тест складається з трьох частин: підготовка (дані), дія (виклик методу), перевірка (`Assert`).
+2. Обчислення завершуються `ToListAsync`, а для нього потрібен асинхронний постачальник запитів EF. Звичайний `AsQueryable()` його не має, і тест падає з «doesn't implement IAsyncEnumerable».
+3. База `:memory:` існує, лише поки відкрите з'єднання. Якби EF сам відкривав і закривав його, база зникала б між операціями.
+4. Розв'язок об'єднує застосунок і тести, щоб одна команда збирала й тестувала все. Він став потрібен, щойно з'явився другий проєкт, тобто в цій роботі.
+5. `[Fact]` — тест без параметрів. `[Theory]` з `[InlineData]` — той самий тест на кількох наборах даних; так перевірено три варіанти екранування CSV.
+6. Якщо змінити знак у формулі суми, першим упаде `TotalEqualsSumOfAmounts`, бо він порівнює підсумок із точним очікуваним числом. Також упадуть `SingleExpense…` і `ExpensesOfDifferentMonths…`, які перевіряють `Total`.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
@@ -290,4 +316,6 @@
 - https://learn.microsoft.com/aspnet/core/fundamentals/minimal-apis/overview
 - https://learn.microsoft.com/aspnet/core/fundamentals/openapi/overview
 - https://guides.scalar.com/scalar/scalar-api-references/net-integration
+- https://xunit.net/docs/getting-started/v3/getting-started
+- https://learn.microsoft.com/ef/core/testing/
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.
