@@ -10,7 +10,11 @@
         <strong class="ms-2">@Expense.Amount.ToString("0.00") грн</strong>
         <span class="ms-2">@Expense.SpentOn.ToString("dd.MM.yyyy")</span>
     </p>
-    <p class="card-text mb-1">Пробіг: @Expense.Odometer км</p>
+    <p class="card-text mb-1">
+        Пробіг: @Expense.Odometer км
+        @if (Expense.Vehicle is not null) { <span> · @Expense.Vehicle.Name</span> }
+        @if (Expense.Place is not null) { <span> · @Expense.Place.Name</span> }
+    </p>
     @if (ShowDetails)
     {
         @if (Expense.Liters is decimal liters)

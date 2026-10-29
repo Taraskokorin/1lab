@@ -1,0 +1,48 @@
+@page "/vehicles/details"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Models
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>Vehicle</h2>
+    <hr />
+    @if (vehicle is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Name</dt>
+            <dd class="col-sm-10">@vehicle.Name</dd>
+            <dt class="col-sm-2">PlateNumber</dt>
+            <dd class="col-sm-10">@vehicle.PlateNumber</dd>
+        </dl>
+        <div>
+            <a href="@($"/vehicles/edit?id={vehicle.Id}")">Edit</a> |
+            <a href="@($"/vehicles")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private Vehicle? vehicle;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        vehicle = await context.Vehicles.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (vehicle is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+}

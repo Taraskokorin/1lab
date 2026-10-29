@@ -42,6 +42,9 @@ namespace CarExpenses.Migrations
                     b.Property<int>("Odometer")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateOnly>("SpentOn")
                         .HasColumnType("TEXT");
 
@@ -50,12 +53,72 @@ namespace CarExpenses.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("SpentOn", "Odometer", "Kind")
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("VehicleId", "SpentOn", "Odometer", "Kind")
                         .IsUnique();
 
                     b.ToTable("CarExpenses");
+                });
+
+            modelBuilder.Entity("CarExpenses.Models.Place", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Places");
+                });
+
+            modelBuilder.Entity("CarExpenses.Models.Vehicle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PlateNumber")
+                        .HasMaxLength(12)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vehicles");
+                });
+
+            modelBuilder.Entity("CarExpenses.Models.CarExpense", b =>
+                {
+                    b.HasOne("CarExpenses.Models.Place", "Place")
+                        .WithMany()
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CarExpenses.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Place");
+
+                    b.Navigation("Vehicle");
                 });
 #pragma warning restore 612, 618
         }

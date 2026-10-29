@@ -1,0 +1,95 @@
+@page "/vehicles/edit"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Models
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>Vehicle</h2>
+<hr />
+@if (Vehicle is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="Vehicle" OnValidSubmit="UpdateVehicle" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="Vehicle.Id" value="@Vehicle.Id" />
+                <div class="mb-3">
+                <span class="text-danger">*</span>
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" @bind-Value="Vehicle.Name" class="form-control" aria-required="true"/>
+                    <ValidationMessage For="() => Vehicle.Name" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="platenumber" class="form-label">PlateNumber:</label>
+                    <InputText id="platenumber" @bind-Value="Vehicle.PlateNumber" class="form-control" />
+                    <ValidationMessage For="() => Vehicle.PlateNumber" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/vehicles">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private Vehicle? Vehicle { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        Vehicle ??= await context.Vehicles.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (Vehicle is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateVehicle()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(Vehicle!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!VehicleExists(Vehicle!.Id))
+            {
+                NavigationManager.NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/vehicles");
+    }
+
+    private bool VehicleExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Vehicles.Any(e => e.Id == id);
+    }
+}

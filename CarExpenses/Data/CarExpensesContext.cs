@@ -9,6 +9,8 @@ public class CarExpensesContext : DbContext
         : base(options) { }
 
     public DbSet<CarExpense> CarExpenses => Set<CarExpense>();
+    public DbSet<Vehicle> Vehicles => Set<Vehicle>();
+    public DbSet<Place> Places => Set<Place>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -19,7 +21,20 @@ public class CarExpensesContext : DbContext
 
         // Одна й та сама витрата не вноситься двічі: день, пробіг і вид разом унікальні.
         b.Entity<CarExpense>()
-            .HasIndex(x => new { x.SpentOn, x.Odometer, x.Kind })
+            .HasIndex(x => new { x.VehicleId, x.SpentOn, x.Odometer, x.Kind })
             .IsUnique();
+
+        // Видалити автомобіль чи місце, на які посилаються витрати, не можна:
+        // інакше одним натисканням зникла б уся історія витрат.
+        b.Entity<CarExpense>()
+            .HasOne(x => x.Vehicle)
+            .WithMany()
+            .HasForeignKey(x => x.VehicleId)
+            .OnDelete(DeleteBehavior.Restrict);
+        b.Entity<CarExpense>()
+            .HasOne(x => x.Place)
+            .WithMany()
+            .HasForeignKey(x => x.PlaceId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

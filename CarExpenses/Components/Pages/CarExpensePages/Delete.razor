@@ -34,7 +34,9 @@
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
-        carexpense = await context.CarExpenses.FirstOrDefaultAsync(m => m.Id == Id);
+        carexpense = await context.CarExpenses
+            .Include(x => x.Vehicle).Include(x => x.Place)
+            .FirstOrDefaultAsync(m => m.Id == Id);
 
         if (carexpense is null)
         {

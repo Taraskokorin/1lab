@@ -21,6 +21,47 @@
 | `Liters` | `decimal?` | залито літрів (лише для заправки) |
 | `NextServiceOn` | `DateOnly?` | дата наступного ТО, якщо відома |
 | `Comment` | `string?` | коментар |
+| `VehicleId` / `Vehicle` | `int` / `Vehicle` | автомобіль (довідник) |
+| `PlaceId` / `Place` | `int` / `Place` | місце: АЗС, СТО, мийка… (довідник) |
+
+### Діаграма класів
+
+```mermaid
+classDiagram
+    class CarExpense {
+        +int Id
+        +string Title
+        +ExpenseKind Kind
+        +decimal Amount
+        +DateOnly SpentOn
+        +int Odometer
+        +decimal? Liters
+        +DateOnly? NextServiceOn
+        +string? Comment
+        +int VehicleId
+        +int PlaceId
+    }
+    class Vehicle {
+        +int Id
+        +string Name
+        +string? PlateNumber
+    }
+    class Place {
+        +int Id
+        +string Name
+    }
+    class ExpenseKind {
+        <<enumeration>>
+        Fuel
+        Maintenance
+        Repair
+        Insurance
+        Other
+    }
+    Vehicle "1" --> "*" CarExpense
+    Place "1" --> "*" CarExpense
+    CarExpense --> ExpenseKind
+```
 
 ## Особливість проєкту
 

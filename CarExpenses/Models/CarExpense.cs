@@ -27,4 +27,9 @@ public class CarExpense
 
     [StringLength(500, ErrorMessage = "Коментар задовгий: не більше 500 символів")]
     public string? Comment { get; set; }
+
+    public int VehicleId { get; set; }               // зовнішній ключ
+    public Vehicle? Vehicle { get; set; }            // навігаційна властивість
+    public int PlaceId { get; set; }
+    public Place? Place { get; set; }
 }

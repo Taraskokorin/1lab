@@ -36,6 +36,24 @@
                 <ValidationMessage For="() => CarExpense.Kind" class="text-danger" /> 
             </div>        
             <div class="mb-3">
+                <label for="vehicle" class="form-label">Автомобіль:</label>
+                <InputSelect id="vehicle" @bind-Value="CarExpense.VehicleId" class="form-select">
+                    @foreach (var v in vehicles)
+                    {
+                        <option value="@v.Id">@v.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label for="place" class="form-label">Місце:</label>
+                <InputSelect id="place" @bind-Value="CarExpense.PlaceId" class="form-select">
+                    @foreach (var p in places)
+                    {
+                        <option value="@p.Id">@p.Name</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="mb-3">
                 <label for="amount" class="form-label">Amount:</label> 
                 <InputNumber id="amount" @bind-Value="CarExpense.Amount" class="form-control" /> 
                 <ValidationMessage For="() => CarExpense.Amount" class="text-danger" /> 
@@ -80,7 +98,17 @@
 
     private string? error;
 
-    protected override void OnInitialized() => CarExpense ??= new();
+    private List<Vehicle> vehicles = new();
+    private List<Place> places = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        CarExpense ??= new();
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        vehicles = await db.Vehicles.OrderBy(v => v.Name).ToListAsync();
+        places = await db.Places.OrderBy(p => p.Name).ToListAsync();
+    }
 
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddCarExpense()
@@ -107,7 +135,7 @@
         catch (DbUpdateException ex)
             when (ex.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 })
         {
-            error = "Такий запис уже є: того самого дня з тим самим пробігом і видом витрати";
+            error = "Такий запис уже є: для цього автомобіля того самого дня з тим самим пробігом і видом витрати";
             return;
         }
         NavigationManager.NavigateTo("/carexpenses");

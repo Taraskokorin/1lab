@@ -14,7 +14,7 @@
     <a href="carexpenses/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="@context.CarExpenses.OrderBy(x => x.Id).Skip((CurrentPage - 1) * PageSize).Take(PageSize)">
+<QuickGrid Class="table" Items="@context.CarExpenses.Include(x => x.Vehicle).Include(x => x.Place).OrderBy(x => x.Id).Skip((CurrentPage - 1) * PageSize).Take(PageSize)">
     <PropertyColumn Property="carexpense => carexpense.Title" />
     <PropertyColumn Property="carexpense => carexpense.Kind" />
     <PropertyColumn Property="carexpense => carexpense.Amount" />
@@ -23,6 +23,8 @@
     <PropertyColumn Property="carexpense => carexpense.Liters" />
     <PropertyColumn Property="carexpense => carexpense.NextServiceOn" />
     <PropertyColumn Property="carexpense => carexpense.Comment" />
+    <PropertyColumn Property="carexpense => carexpense.Vehicle!.Name" Title="Автомобіль" />
+    <PropertyColumn Property="carexpense => carexpense.Place!.Name" Title="Місце" />
 
     <TemplateColumn Context="carexpense">
         <a href="@($"carexpenses/edit?id={carexpense.Id}")">Edit</a> |
