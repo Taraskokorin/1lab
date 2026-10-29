@@ -1,6 +1,7 @@
 @page "/carexpenses/edit"
 @using Microsoft.EntityFrameworkCore
 @using CarExpenses.Models
+@using Microsoft.Data.Sqlite
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -20,7 +21,11 @@ else
         <div class="col-md-4">
             <EditForm method="post" Model="CarExpense" OnValidSubmit="UpdateCarExpense" FormName="edit" Enhance>
                 <DataAnnotationsValidator />
-                <ValidationSummary role="alert"/>
+                <ValidationSummary class="text-danger" role="alert"/>
+                @if (error is not null)
+                {
+                    <div class="alert alert-danger">@error</div>
+                }
                 <input type="hidden" name="CarExpense.Id" value="@CarExpense.Id" />
                 <div class="mb-3">
                     <label for="title" class="form-label">Title:</label>
@@ -84,6 +89,8 @@ else
     [SupplyParameterFromForm]
     private CarExpense? CarExpense { get; set; }
 
+    private string? error;
+
     protected override async Task OnInitializedAsync()
     {
         using var context = DbFactory.CreateDbContext();
@@ -99,12 +106,30 @@ else
     // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdateCarExpense()
     {
+        if (CarExpense!.NextServiceOn is DateOnly next && next <= CarExpense.SpentOn)
+        {
+            error = "Дата наступного ТО має бути пізніша за дату витрати";
+            return;
+        }
+
+        if (CarExpense.Liters is not null && CarExpense.Kind != ExpenseKind.Fuel)
+        {
+            error = "Літри зазначають лише для заправки: оберіть вид «Fuel» або очистіть поле";
+            return;
+        }
+
         using var context = DbFactory.CreateDbContext();
         context.Attach(CarExpense!).State = EntityState.Modified;
 
         try
         {
             await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 })
+        {
+            error = "Такий запис уже є: того самого дня з тим самим пробігом і видом витрати";
+            return;
         }
         catch (DbUpdateConcurrencyException)
         {

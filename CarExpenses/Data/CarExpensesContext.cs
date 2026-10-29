@@ -16,5 +16,10 @@ public class CarExpensesContext : DbContext
         // щоб сортування й Sum виконувала база (див. NOTES, ЛР 3).
         b.Entity<CarExpense>().Property(x => x.Amount).HasConversion<double>();
         b.Entity<CarExpense>().Property(x => x.Liters).HasConversion<double?>();
+
+        // Одна й та сама витрата не вноситься двічі: день, пробіг і вид разом унікальні.
+        b.Entity<CarExpense>()
+            .HasIndex(x => new { x.SpentOn, x.Odometer, x.Kind })
+            .IsUnique();
     }
 }

@@ -1,6 +1,7 @@
 @page "/carexpenses/create"
 @using Microsoft.EntityFrameworkCore
 @using CarExpenses.Models
+@using Microsoft.Data.Sqlite
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -15,6 +16,10 @@
         <EditForm method="post" Model="CarExpense" OnValidSubmit="AddCarExpense" FormName="create" Enhance>
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert"/>
+            @if (error is not null)
+            {
+                <div class="alert alert-danger">@error</div>
+            }
             <div class="mb-3">
                 <label for="title" class="form-label">Title:</label> 
                 <InputText id="title" @bind-Value="CarExpense.Title" class="form-control" /> 
@@ -73,14 +78,38 @@
     [SupplyParameterFromForm]
     private CarExpense CarExpense { get; set; } = default!;
 
+    private string? error;
+
     protected override void OnInitialized() => CarExpense ??= new();
 
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddCarExpense()
     {
+        if (CarExpense!.NextServiceOn is DateOnly next && next <= CarExpense.SpentOn)
+        {
+            error = "Дата наступного ТО має бути пізніша за дату витрати";
+            return;
+        }
+
+        if (CarExpense.Liters is not null && CarExpense.Kind != ExpenseKind.Fuel)
+        {
+            error = "Літри зазначають лише для заправки: оберіть вид «Fuel» або очистіть поле";
+            return;
+        }
+
         using var context = DbFactory.CreateDbContext();
         context.CarExpenses.Add(CarExpense);
-        await context.SaveChangesAsync();
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is SqliteException { SqliteExtendedErrorCode: 2067 })
+        {
+            error = "Такий запис уже є: того самого дня з тим самим пробігом і видом витрати";
+            return;
+        }
         NavigationManager.NavigateTo("/carexpenses");
     }
 }

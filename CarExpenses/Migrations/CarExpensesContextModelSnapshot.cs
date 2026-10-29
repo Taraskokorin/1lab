@@ -27,6 +27,7 @@ namespace CarExpenses.Migrations
                         .HasColumnType("REAL");
 
                     b.Property<string>("Comment")
+                        .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Kind")
@@ -46,9 +47,13 @@ namespace CarExpenses.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SpentOn", "Odometer", "Kind")
+                        .IsUnique();
 
                     b.ToTable("CarExpenses");
                 });
