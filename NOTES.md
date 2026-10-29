@@ -155,6 +155,37 @@
 6. Повторний запуск генератора для `CarExpense` перезаписав би сторінки й знищив компонент з ЛР 5 і перевірки з ЛР 6.
 7. Варіант «не обрано» можливий лише тоді, коли ключ має тип `int?` з `[Required]` і є відповідна міграція. Інакше `InputSelect<int>` не розбере порожній рядок.
 
+## ЛР 8. Запити LINQ і асинхронний доступ до даних
+
+- **Службова властивість `TitleSearch`.** До `CarExpense` додано опис у нижньому регістрі (міграція `AddTitleSearch`). У `Up` вручну дописано `UPDATE CarExpenses SET TitleSearch = lower(Title)`.
+  - Як і попереджала методичка, SQL-функція `lower` кириличні описи не змінила («Заправка» лишилася з великої).
+  - Тож наявні записи перезаповнено значенням `Title`, переведеним у нижній регістр. Це те саме, що робить код C# під час перезбереження форми.
+- **Заповнення під час збереження:** у `Create.razor` і `Edit.razor` перед збереженням стоїть `CarExpense.TitleSearch = CarExpense.Title.ToLowerInvariant()`.
+- **Сторінка переліку.** Запит будує й виконує `LoadAsync()` в одному блоці `await using`.
+  - Пошук за описом нечутливий до регістру: `TitleSearch.Contains(s)`.
+  - Фільтр за автомобілем: `VehicleId`.
+  - Впорядкування: за датою (нові спершу, за замовчуванням), за сумою або за описом.
+  - Умови беруться з адреси (`[SupplyParameterFromQuery]`), а форма `method="get"` їх зберігає.
+  - Посилання «Назад/Далі» передають усі умови (`PageUrl`).
+  - Поле `context`, `DisposeAsync` і `@implements IAsyncDisposable` прибрано.
+- **Перевірено в браузері:** `/carexpenses?search=ЗАПРАВКА&vehicleId=1&sort=amount` показує лише заправки Skoda Octavia від більшої суми до меншої (1520 → 1380). Великі літери в запиті не заважають.
+
+### Перевірка асинхронності
+Пошуком по всіх файлах шукав `ToList(`, `First(`, `FirstOrDefault(`, `SaveChanges(`, `.Any(`, `.Result`, `.Wait(` і `CreateDbContext()`. Виправлено:
+- **`CarExpensePages/Create, Details, Edit, Delete.razor`:** `using var context = DbFactory.CreateDbContext()` замінено на `await using var context = await DbFactory.CreateDbContextAsync()`; синхронний `CarExpenseExists` (`Any`) замінено на `CarExpenseExistsAsync` (`AnyAsync`).
+- **`VehiclePages/…` і `PlacePages/…`:** ті самі заміни.
+- **`CarExpensePages/Index.razor`:** уже `ToListAsync`.
+
+Лишилися `CreateDbContext()` в `OnInitialized` сторінок переліку довідників: там лише створюється контекст для `QuickGrid`, а самі запити `QuickGrid` виконує асинхронно через адаптер EF.
+
+### Відповіді на «Перевірте себе»
+1. `IQueryable` перекладається на SQL і виконується базою. `IEnumerable` виконується в пам'яті над уже завантаженими об'єктами.
+2. З `ToList` перед `Where` база віддасть усю таблицю, а відбір піде в пам'яті. На 14 записах це непомітно, на десятках тисяч — повільно.
+3. Запит виконується відкладено. Якщо контекст уже звільнено, перебирання `IQueryable` дасть `ObjectDisposedException`.
+4. У SQLite `lower` і `instr` (`Contains`) не знають кирилиці. Тому зберігається окрема властивість у нижньому регістрі. Інший спосіб — власне правило зіставлення (`SqliteConnection.CreateCollation`).
+5. Після міграції в старих записах `TitleSearch` був `lower(Title)`, тобто з великою «З». Виправлено перезаповненням значенням `Title.ToLowerInvariant()`.
+6. Поки база відповідає, потік обслуговує інші запити. `.Result` блокує потік і під навантаженням вичерпує пул потоків.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
@@ -173,4 +204,6 @@
 - https://learn.microsoft.com/ef/core/modeling/relationships
 - https://learn.microsoft.com/ef/core/querying/related-data/
 - https://docs.github.com/get-started/writing-on-github/working-with-advanced-formatting/creating-diagrams
+- https://learn.microsoft.com/dotnet/csharp/asynchronous-programming/
+- https://learn.microsoft.com/dotnet/standard/data/sqlite/collation
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.

@@ -125,7 +125,8 @@
             return;
         }
 
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
+        CarExpense.TitleSearch = CarExpense.Title.ToLowerInvariant();
         context.CarExpenses.Add(CarExpense);
 
         try

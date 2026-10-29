@@ -39,7 +39,7 @@
     // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task AddPlace()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         context.Places.Add(Place);
         await context.SaveChangesAsync();
         NavigationManager.NavigateTo("/places");

@@ -47,7 +47,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         vehicle = await context.Vehicles.FirstOrDefaultAsync(m => m.Id == Id);
 
         if (vehicle is null)
@@ -58,7 +58,7 @@
 
     private async Task DeleteVehicle()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         context.Vehicles.Remove(vehicle!);
 
         try

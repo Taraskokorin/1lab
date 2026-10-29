@@ -47,7 +47,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         Place ??= await context.Places.FirstOrDefaultAsync(m => m.Id == Id);
 
         if (Place is null)
@@ -60,7 +60,7 @@ else
     // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdatePlace()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         context.Attach(Place!).State = EntityState.Modified;
 
         try
@@ -69,7 +69,7 @@ else
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!PlaceExists(Place!.Id))
+            if (!await PlaceExistsAsync(Place!.Id))
             {
                 NavigationManager.NotFound();
             }
@@ -82,9 +82,9 @@ else
         NavigationManager.NavigateTo("/places");
     }
 
-    private bool PlaceExists(int id)
+    private async Task<bool> PlaceExistsAsync(int id)
     {
-        using var context = DbFactory.CreateDbContext();
-        return context.Places.Any(e => e.Id == id);
+        await using var context = await DbFactory.CreateDbContextAsync();
+        return await context.Places.AnyAsync(e => e.Id == id);
     }
 }

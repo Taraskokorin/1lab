@@ -3,7 +3,6 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using CarExpenses.Models
 @using CarExpenses.Data
-@implements IAsyncDisposable
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 
 <PageTitle>Index</PageTitle>
@@ -14,7 +13,33 @@
     <a href="carexpenses/create">Create New</a>
 </p>
 
-<QuickGrid Class="table" Items="@context.CarExpenses.Include(x => x.Vehicle).Include(x => x.Place).OrderBy(x => x.Id).Skip((CurrentPage - 1) * PageSize).Take(PageSize)">
+<form method="get" class="row g-2 mb-3">
+  <div class="col">
+    <input name="search" value="@Search" class="form-control"
+           placeholder="Пошук за описом" />
+  </div>
+  <div class="col">
+    <select name="vehicleId" class="form-select">
+      <option value="">Усі автомобілі</option>
+      @foreach (var v in vehicles)
+      {
+          <option value="@v.Id" selected="@(VehicleId == v.Id)">@v.Name</option>
+      }
+    </select>
+  </div>
+  <div class="col">
+    <select name="sort" class="form-select">
+      <option value="">За датою (нові спершу)</option>
+      <option value="amount" selected="@(Sort == "amount")">За сумою</option>
+      <option value="title" selected="@(Sort == "title")">За описом</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Шукати</button>
+  </div>
+</form>
+
+<QuickGrid Class="table" Items="@expenses.Skip((CurrentPage - 1) * PageSize).Take(PageSize).AsQueryable()">
     <PropertyColumn Property="carexpense => carexpense.Title" />
     <PropertyColumn Property="carexpense => carexpense.Kind" />
     <PropertyColumn Property="carexpense => carexpense.Amount" />
@@ -33,22 +58,58 @@
     </TemplateColumn>
 </QuickGrid>
 <nav>
-@if (CurrentPage > 1) { <a class="btn btn-outline-secondary" href="@($"carexpenses?page={CurrentPage - 1}")">Назад</a> }
+@if (CurrentPage > 1) { <a class="btn btn-outline-secondary" href="@PageUrl(CurrentPage - 1)">Назад</a> }
 <span class="mx-2">Сторінка @CurrentPage</span>
-@if (context.CarExpenses.Count() > CurrentPage * PageSize) { <a class="btn btn-outline-secondary" href="@($"carexpenses?page={CurrentPage + 1}")">Далі</a> }
+@if (expenses.Count > CurrentPage * PageSize) { <a class="btn btn-outline-secondary" href="@PageUrl(CurrentPage + 1)">Далі</a> }
 </nav>
 
 @code {
-    private CarExpensesContext context = default!;
-
     private const int PageSize = 10;
     [SupplyParameterFromQuery] public int? Page { get; set; }
     private int CurrentPage => Page is > 0 ? Page.Value : 1;
 
-    protected override void OnInitialized()
+    [SupplyParameterFromQuery] public string? Search { get; set; }
+    [SupplyParameterFromQuery] public int? VehicleId { get; set; }
+    [SupplyParameterFromQuery] public string? Sort { get; set; }
+
+    private List<CarExpense> expenses = new();
+    private List<Vehicle> vehicles = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        context = DbFactory.CreateDbContext();
+        expenses = await LoadAsync();
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        vehicles = await db.Vehicles.OrderBy(v => v.Name).ToListAsync();
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    // Запит будують і виконують в одному методі: IQueryable не можна
+    // віддавати назовні, бо контекст після виходу з методу звільнено.
+    private async Task<List<CarExpense>> LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        var q = db.CarExpenses.Include(x => x.Vehicle).Include(x => x.Place).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var s = Search.Trim().ToLowerInvariant();
+            q = q.Where(x => x.TitleSearch.Contains(s));
+        }
+
+        if (VehicleId is int id)
+            q = q.Where(x => x.VehicleId == id);
+
+        q = Sort switch
+        {
+            "amount" => q.OrderByDescending(x => x.Amount),
+            "title"  => q.OrderBy(x => x.Title),
+            _        => q.OrderByDescending(x => x.SpentOn).ThenByDescending(x => x.Odometer)
+        };
+
+        return await q.ToListAsync();
+    }
+
+    private string PageUrl(int page) =>
+        $"carexpenses?page={page}&search={Uri.EscapeDataString(Search ?? "")}&vehicleId={VehicleId}&sort={Sort}";
 }

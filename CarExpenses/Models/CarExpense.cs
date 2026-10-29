@@ -10,6 +10,9 @@ public class CarExpense
     [StringLength(150, ErrorMessage = "Опис задовгий: не більше 150 символів")]
     public string Title { get; set; } = "";          // обов’язкова: що саме оплачено
 
+    /// <summary>Title у нижньому регістрі – для пошуку кирилицею (SQLite не вміє сам).</summary>
+    public string TitleSearch { get; set; } = "";
+
     public ExpenseKind Kind { get; set; }
 
     [Range(0.01, 1_000_000, ErrorMessage = "Сума має бути від 0,01 до 1 000 000 грн")]

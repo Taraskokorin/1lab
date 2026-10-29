@@ -53,6 +53,10 @@ namespace CarExpenses.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("TitleSearch")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("VehicleId")
                         .HasColumnType("INTEGER");
 

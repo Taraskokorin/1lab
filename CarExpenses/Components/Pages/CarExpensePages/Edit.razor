@@ -114,7 +114,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         CarExpense ??= await context.CarExpenses
             .Include(x => x.Vehicle).Include(x => x.Place)
             .FirstOrDefaultAsync(m => m.Id == Id);
@@ -144,7 +144,8 @@ else
             return;
         }
 
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
+        CarExpense.TitleSearch = CarExpense.Title.ToLowerInvariant();
         context.Attach(CarExpense!).State = EntityState.Modified;
 
         try
@@ -159,7 +160,7 @@ else
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!CarExpenseExists(CarExpense!.Id))
+            if (!await CarExpenseExistsAsync(CarExpense!.Id))
             {
                 NavigationManager.NotFound();
             }
@@ -172,9 +173,9 @@ else
         NavigationManager.NavigateTo("/carexpenses");
     }
 
-    private bool CarExpenseExists(int id)
+    private async Task<bool> CarExpenseExistsAsync(int id)
     {
-        using var context = DbFactory.CreateDbContext();
-        return context.CarExpenses.Any(e => e.Id == id);
+        await using var context = await DbFactory.CreateDbContextAsync();
+        return await context.CarExpenses.AnyAsync(e => e.Id == id);
     }
 }

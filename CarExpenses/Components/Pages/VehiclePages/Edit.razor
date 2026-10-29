@@ -52,7 +52,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         Vehicle ??= await context.Vehicles.FirstOrDefaultAsync(m => m.Id == Id);
 
         if (Vehicle is null)
@@ -65,7 +65,7 @@ else
     // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
     private async Task UpdateVehicle()
     {
-        using var context = DbFactory.CreateDbContext();
+        await using var context = await DbFactory.CreateDbContextAsync();
         context.Attach(Vehicle!).State = EntityState.Modified;
 
         try
@@ -74,7 +74,7 @@ else
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!VehicleExists(Vehicle!.Id))
+            if (!await VehicleExistsAsync(Vehicle!.Id))
             {
                 NavigationManager.NotFound();
             }
@@ -87,9 +87,9 @@ else
         NavigationManager.NavigateTo("/vehicles");
     }
 
-    private bool VehicleExists(int id)
+    private async Task<bool> VehicleExistsAsync(int id)
     {
-        using var context = DbFactory.CreateDbContext();
-        return context.Vehicles.Any(e => e.Id == id);
+        await using var context = await DbFactory.CreateDbContextAsync();
+        return await context.Vehicles.AnyAsync(e => e.Id == id);
     }
 }
