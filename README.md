@@ -88,11 +88,59 @@ classDiagram
 
 ## Як запустити
 
-Потрібен .NET SDK 10.
+Потрібен **.NET SDK 10** (https://dotnet.microsoft.com/download). Окремий сервер бази даних не потрібен: SQLite — це один файл, а міграції застосунок виконує сам під час запуску.
 
 ```
-cd CarExpenses
+git clone https://github.com/Taraskokorin/1lab.git
+cd 1lab/CarExpenses
 dotnet run
 ```
 
-Застосунок відкривається за адресою http://localhost:5185 (порт записано в `CarExpenses/Properties/launchSettings.json`).
+У консолі з'явиться адреса, наприклад `http://localhost:5185`. Відкрийте її в браузері. Під час першого запуску поруч створюється порожня база `carexpenses.db`; додайте автомобіль і місце (меню «Автомобілі», «Місця»), а потім першу витрату.
+
+Тести запускають з кореневого каталогу:
+
+```
+cd 1lab
+dotnet test
+```
+
+## Налаштування
+
+У `CarExpenses/appsettings.json`:
+- `ConnectionStrings:Default` — рядок підключення до SQLite;
+- `CarExpenses:PageSize` — скільки витрат показувати на сторінці;
+- `CarExpenses:Title` — назва застосунку в меню.
+
+У середовищі Production (`ASPNETCORE_ENVIRONMENT=Production`) сторінка помилки не показує подробиць, а опис OpenAPI й `/scalar` вимкнено.
+
+## Опублікована збірка
+
+```
+cd CarExpenses
+dotnet publish -c Release -o ../publish
+cd ../publish
+dotnet CarExpenses.dll
+```
+
+Застосунок відкривається на `http://localhost:5000` і створює власну порожню базу.
+
+## Контейнер
+
+Docker на машині розробника не встановлено, тому образ не збирався. Нижче описано порядок, за яким його створює .NET SDK без Dockerfile:
+
+```
+cd CarExpenses
+dotnet publish -c Release --os linux --arch x64 -p:ContainerImageTag=latest /t:PublishContainer
+docker volume create carexpenses-data
+docker run --rm -p 8080:8080 -v carexpenses-data:/home/app/data -e ConnectionStrings__Default="Data Source=/home/app/data/carexpenses.db" carexpenses:latest
+```
+
+- Перша команда створює образ `carexpenses:latest` (назва — від назви збірки в нижньому регістрі; порт 8080).
+- База лежить у томі `carexpenses-data`, тож записи переживають перезапуск контейнера (`--rm` видаляє лише сам контейнер).
+- Шлях до бази задано змінною середовища (`ConnectionStrings__Default` = розділ `ConnectionStrings`, ключ `Default`), бо в образі застосунок працює від імені користувача `app` і писати може лише у `/home/app`.
+- Міграції виконує сам застосунок, бо засобу `dotnet ef` в образі немає.
+- Якщо контейнер повідомляє «unable to open database file», додайте до `docker run` параметр `--user root` (каталог тому створено від імені root).
+- Застосунок відкривається на `http://localhost:8080`. HTTPS-перенаправлення ввімкнене лише в Development, тому в контейнері сторінка відкривається звичайним `http`.
+
+Автор: Кокорін Тарас, група 33 Бд-СОінф.

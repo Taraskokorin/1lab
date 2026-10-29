@@ -14,13 +14,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents();
 
 builder.Services.AddDbContextFactory<CarExpensesContext>(o =>
-    o.UseSqlite("Data Source=carexpenses.db"));   // тимчасово; у ЛР 13
-                                                  // винесемо до appsettings.json
+    o.UseSqlite(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+// У контейнері й опублікованій збірці засобу dotnet ef немає –
+// міграції застосовує сам застосунок під час запуску.
+var factory = app.Services.GetRequiredService<IDbContextFactory<CarExpensesContext>>();
+await using (var db = await factory.CreateDbContextAsync())
+{
+    await db.Database.MigrateAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -32,7 +39,6 @@ if (!app.Environment.IsDevelopment())
 // Сторінку «не знайдено» показуємо лише людям; вебсервіс віддає чистий код 404.
 app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api"),
     b => b.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true));
-app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
@@ -41,6 +47,8 @@ app.MapRazorComponents<App>();
 
 if (app.Environment.IsDevelopment())
 {
+    // HTTPS – лише в розробці: у контейнері сертифіката немає (ЛР 13).
+    app.UseHttpsRedirection();
     app.MapOpenApi();
     app.MapScalarApiReference();
 }

@@ -288,6 +288,34 @@
 5. `[Fact]` — тест без параметрів. `[Theory]` з `[InlineData]` — той самий тест на кількох наборах даних; так перевірено три варіанти екранування CSV.
 6. Якщо змінити знак у формулі суми, першим упаде `TotalEqualsSumOfAmounts`, бо він порівнює підсумок із точним очікуваним числом. Також упадуть `SingleExpense…` і `ExpensesOfDifferentMonths…`, які перевіряють `Total`.
 
+## ЛР 13. Конфігурація, журналювання, публікація
+
+- **Налаштування.** В `appsettings.json` винесено рядок підключення (`ConnectionStrings:Default`) і два власні параметри: `CarExpenses:PageSize` (розмір сторінки переліку, читається в `Index.razor` через `IConfiguration`) і `CarExpenses:Title` (назва в меню, `NavMenu.razor`). У `Program.cs` використовується `GetConnectionString("Default")`.
+  - **Перевірено:** з `PageSize` = 3 на сторінці було рівно 3 записи. Потім значення повернуто на 10.
+- **Секрети розробника.** Виконав `dotnet user-secrets init` і `set "CarExpenses:Title" "Облік автомобіля (секрет розробника)"`.
+  - У Development меню показало значення із секретів, у Production — значення з `appsettings.json`. Секрети лежать поза репозиторієм, у профілі користувача; у `.csproj` потрапляє лише `UserSecretsId`.
+  - Після перевірки значення видалено (`user-secrets remove`), щоб у звичайному запуску була нормальна назва.
+- **Журналювання.** `ILogger<Create>`, `ILogger<Edit>` і `ILogger<Delete>` пишуть «Створено/Змінено/Видалено витрату {Id}». До журналу потрапляє лише ідентифікатор, без вмісту форми. **Перевірено:** у консолі з'явилися рядки «Створено витрату 15» і після видалення — «Видалено витрату 15».
+- **Міграції під час запуску.** `MigrateAsync()` стоїть одразу після `builder.Build()`: опублікована збірка й контейнер створюють базу самі.
+- **Відсутній запис.** У `Details`, `Edit` і `Delete` згенерований виклик `NavigationManager.NotFound()` прибрано. Замість «Завантаження…» показується «Витрату не знайдено – можливо, її видалено. До переліку» (`/carexpenses/details?id=99999` → попередження, а не помилка).
+- **HTTPS.** `UseHttpsRedirection` перенесено всередину `if (app.Environment.IsDevelopment())`: у контейнері сертифіката немає.
+- **Production.** Запуск `ASPNETCORE_ENVIRONMENT=Production dotnet run --no-launch-profile` з тимчасовим `throw new Exception("перевірка")` у `Summary.razor`:
+  - **Production:** загальна сторінка «Error. An error occurred while processing your request.», без стека викликів; `/scalar` віддає 404;
+  - **Development:** «System.Exception: перевірка» зі стеком.
+
+  Тимчасовий рядок прибрано.
+- **Публікація.** `dotnet publish -c Release -o ../publish`, потім `dotnet CarExpenses.dll`. Застосунок запустився на `http://localhost:5000` (Production) і сам створив порожню `carexpenses.db`; перелік показує порожній стан. Каталог `publish/` у `.gitignore`.
+- **Контейнер.** Docker на цій машині не встановлено (і потрібні права адміністратора), тож за запасним варіантом методички порядок контейнеризації описано в README.
+
+### Відповіді на «Перевірте себе»
+1. Development показує подробиці помилки й опис API, а Production — загальне повідомлення. Розкривати будову застосунку стороннім небезпечно.
+2. Значення, які не можна розголошувати, зберігають у секретах користувача (розробка) або в змінних середовища чи сховищі секретів (сервер). Файл налаштувань потрапляє в репозиторій, і ключ звідти побачать усі.
+3. Зареєстровано лише `ILogger<T>`. Тип-власник визначає категорію журналу, тож `ILogger` без параметра платформа не підставить.
+4. До журналу записую події «створено, змінено, видалено витрату» з ідентифікатором. Персональні дані, паролі й вміст форм туди не пишуть.
+5. `dotnet run` бере змінні середовища з `launchSettings.json`, і вони перекривають задані в оболонці. Без `--no-launch-profile` застосунок однаково стартував би в Development.
+6. В опублікованій збірці й контейнері немає `dotnet ef`, і базу ніхто інший не оновить.
+7. Контейнер із `--rm` зникає разом із файлами, тому база лежить у томі. Шлях до неї задано змінною середовища, бо користувач `app` має право писати лише у свій каталог.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
@@ -318,4 +346,8 @@
 - https://guides.scalar.com/scalar/scalar-api-references/net-integration
 - https://xunit.net/docs/getting-started/v3/getting-started
 - https://learn.microsoft.com/ef/core/testing/
+- https://learn.microsoft.com/aspnet/core/fundamentals/configuration/
+- https://learn.microsoft.com/aspnet/core/security/app-secrets
+- https://learn.microsoft.com/dotnet/core/extensions/logging
+- https://learn.microsoft.com/dotnet/core/containers/sdk-publish
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.

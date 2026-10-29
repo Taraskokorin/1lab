@@ -11,7 +11,10 @@
 <div>
     @if (carexpense is null)
     {
-        <p><em>Завантаження…</em></p>
+        <div class="alert alert-warning">
+        Витрату не знайдено – можливо, її видалено.
+        <a href="/carexpenses">До переліку</a>.
+    </div>
     }
     else {
         <ExpenseCard Expense="carexpense" Caption="Подробиці запису" />
@@ -34,10 +37,5 @@
         carexpense = await context.CarExpenses
             .Include(x => x.Vehicle).Include(x => x.Place)
             .FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (carexpense is null)
-        {
-            NavigationManager.NotFound();
-        }
     }
 }

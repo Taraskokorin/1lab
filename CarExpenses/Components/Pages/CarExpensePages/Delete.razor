@@ -3,6 +3,7 @@
 @using CarExpenses.Models
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject ILogger<Delete> Logger
 
 <PageTitle>Видалення витрати – Облік автомобіля</PageTitle>
 
@@ -15,7 +16,10 @@
 <div>
     @if (carexpense is null)
     {
-        <p><em>Завантаження…</em></p>
+        <div class="alert alert-warning">
+        Витрату не знайдено – можливо, її видалено.
+        <a href="/carexpenses">До переліку</a>.
+    </div>
     }
     else {
         <ExpenseCard Expense="carexpense" Caption="Перевірте, що видаляєте" ShowDetails="false" />
@@ -38,11 +42,6 @@
         carexpense = await context.CarExpenses
             .Include(x => x.Vehicle).Include(x => x.Place)
             .FirstOrDefaultAsync(m => m.Id == Id);
-
-        if (carexpense is null)
-        {
-            NavigationManager.NotFound();
-        }
     }
 
     private async Task DeleteCarExpense()
@@ -50,6 +49,7 @@
         await using var context = await DbFactory.CreateDbContextAsync();
         context.CarExpenses.Remove(carexpense!);
         await context.SaveChangesAsync();
+        Logger.LogInformation("Видалено витрату {Id}", carexpense!.Id);
         NavigationManager.NavigateTo("/carexpenses");
     }
 }

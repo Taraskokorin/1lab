@@ -4,6 +4,7 @@
 @using Microsoft.Data.Sqlite
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject ILogger<Edit> Logger
 
 <PageTitle>Редагування витрати – Облік автомобіля</PageTitle>
 
@@ -11,7 +12,10 @@
 
 @if (CarExpense is null)
 {
-    <p><em>Завантаження…</em></p>
+    <div class="alert alert-warning">
+        Витрату не знайдено – можливо, її видалено.
+        <a href="/carexpenses">До переліку</a>.
+    </div>
 }
 else
 {
@@ -119,11 +123,6 @@ else
 
         vehicles = await context.Vehicles.OrderBy(v => v.Name).ToListAsync();
         places = await context.Places.OrderBy(p => p.Name).ToListAsync();
-
-        if (CarExpense is null)
-        {
-            NavigationManager.NotFound();
-        }
     }
 
     // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -168,6 +167,7 @@ else
             }
         }
 
+        Logger.LogInformation("Змінено витрату {Id}", CarExpense!.Id);
         NavigationManager.NavigateTo("/carexpenses?saved=true");
     }
 

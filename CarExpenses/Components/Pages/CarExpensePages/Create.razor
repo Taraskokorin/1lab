@@ -4,6 +4,7 @@
 @using Microsoft.Data.Sqlite
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
 @inject NavigationManager NavigationManager
+@inject ILogger<Create> Logger
 
 <PageTitle>Нова витрата – Облік автомобіля</PageTitle>
 
@@ -137,6 +138,8 @@
             error = "Такий запис уже є: для цього автомобіля того самого дня з тим самим пробігом і видом витрати";
             return;
         }
+
+        Logger.LogInformation("Створено витрату {Id}", CarExpense.Id);
         NavigationManager.NavigateTo("/carexpenses?saved=true");
     }
 }

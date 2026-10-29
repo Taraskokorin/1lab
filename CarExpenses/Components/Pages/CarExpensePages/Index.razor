@@ -4,6 +4,7 @@
 @using CarExpenses.Models
 @using CarExpenses.Data
 @inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject IConfiguration Config
 
 <PageTitle>Витрати – Облік автомобіля</PageTitle>
 
@@ -88,7 +89,7 @@ else
 }
 
 @code {
-    private const int PageSize = 10;
+    private int PageSize => Math.Max(1, Config.GetValue("CarExpenses:PageSize", 10));
     [SupplyParameterFromQuery] public int? Page { get; set; }
     private int CurrentPage => Page is > 0 ? Page.Value : 1;
 
