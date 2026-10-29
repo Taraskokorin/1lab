@@ -1,0 +1,86 @@
+@page "/carexpenses/create"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Models
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>CarExpense</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="CarExpense" OnValidSubmit="AddCarExpense" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="CarExpense.Title" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="kind" class="form-label">Kind:</label> 
+                <InputSelect id="kind" @bind-Value="CarExpense.Kind" class="form-select">
+                    @foreach (var kind in Enum.GetValues<ExpenseKind>())
+                    {
+                        <option value="@kind">@kind</option>
+                    }
+                </InputSelect> 
+                <ValidationMessage For="() => CarExpense.Kind" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount:</label> 
+                <InputNumber id="amount" @bind-Value="CarExpense.Amount" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.Amount" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="spenton" class="form-label">SpentOn:</label> 
+                <InputDate id="spenton" @bind-Value="CarExpense.SpentOn" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.SpentOn" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="odometer" class="form-label">Odometer:</label> 
+                <InputNumber id="odometer" @bind-Value="CarExpense.Odometer" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.Odometer" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="liters" class="form-label">Liters:</label> 
+                <InputNumber id="liters" @bind-Value="CarExpense.Liters" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.Liters" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="nextserviceon" class="form-label">NextServiceOn:</label> 
+                <InputDate id="nextserviceon" @bind-Value="CarExpense.NextServiceOn" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.NextServiceOn" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="comment" class="form-label">Comment:</label> 
+                <InputText id="comment" @bind-Value="CarExpense.Comment" class="form-control" /> 
+                <ValidationMessage For="() => CarExpense.Comment" class="text-danger" /> 
+            </div>        
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/carexpenses">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private CarExpense CarExpense { get; set; } = default!;
+
+    protected override void OnInitialized() => CarExpense ??= new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddCarExpense()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.CarExpenses.Add(CarExpense);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/carexpenses");
+    }
+}

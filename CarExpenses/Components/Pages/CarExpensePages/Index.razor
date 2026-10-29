@@ -1,0 +1,52 @@
+@page "/carexpenses"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CarExpenses.Models
+@using CarExpenses.Data
+@implements IAsyncDisposable
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="carexpenses/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="@context.CarExpenses.OrderBy(x => x.Id).Skip((CurrentPage - 1) * PageSize).Take(PageSize)">
+    <PropertyColumn Property="carexpense => carexpense.Title" />
+    <PropertyColumn Property="carexpense => carexpense.Kind" />
+    <PropertyColumn Property="carexpense => carexpense.Amount" />
+    <PropertyColumn Property="carexpense => carexpense.SpentOn" />
+    <PropertyColumn Property="carexpense => carexpense.Odometer" />
+    <PropertyColumn Property="carexpense => carexpense.Liters" />
+    <PropertyColumn Property="carexpense => carexpense.NextServiceOn" />
+    <PropertyColumn Property="carexpense => carexpense.Comment" />
+
+    <TemplateColumn Context="carexpense">
+        <a href="@($"carexpenses/edit?id={carexpense.Id}")">Edit</a> |
+        <a href="@($"carexpenses/details?id={carexpense.Id}")">Details</a> |
+        <a href="@($"carexpenses/delete?id={carexpense.Id}")">Delete</a>
+    </TemplateColumn>
+</QuickGrid>
+<nav>
+@if (CurrentPage > 1) { <a class="btn btn-outline-secondary" href="@($"carexpenses?page={CurrentPage - 1}")">Назад</a> }
+<span class="mx-2">Сторінка @CurrentPage</span>
+@if (context.CarExpenses.Count() > CurrentPage * PageSize) { <a class="btn btn-outline-secondary" href="@($"carexpenses?page={CurrentPage + 1}")">Далі</a> }
+</nav>
+
+@code {
+    private CarExpensesContext context = default!;
+
+    private const int PageSize = 10;
+    [SupplyParameterFromQuery] public int? Page { get; set; }
+    private int CurrentPage => Page is > 0 ? Page.Value : 1;
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

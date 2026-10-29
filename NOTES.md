@@ -54,6 +54,32 @@
 6. Код і схема розійдуться: запити звертатимуться до стовпців, яких у базі немає, і застосунок упаде під час виконання.
 7. Зупинити застосунок, видалити `carexpenses.db` (і `-shm`, `-wal`), виконати `dotnet ef database update` — база створиться заново з усіма міграціями.
 
+## ЛР 4. Генератор сторінок
+
+- Генератор запущено так: `dotnet aspnet-codegenerator blazor CRUD -dbProvider sqlite -dc CarExpenses.Data.CarExpensesContext -m CarExpense -outDir Components/Pages`. Він створив `Components/Pages/CarExpensePages/` з п'ятьма сторінками: `Index`, `Create`, `Details`, `Edit`, `Delete`. Адреса переліку — `/carexpenses` (з `@page`).
+- **Що довелося виправити після генератора:**
+  - Генератор вимагав пакет `Microsoft.EntityFrameworkCore.Tools` («install Entity Framework core packages…»), тож його додано.
+  - Генератор дописав у `Program.cs` інтерактивний режим (`AddInteractiveServerComponents`, `AddInteractiveServerRenderMode`) і `UseMigrationsEndPoint`, а також переписав `Routes.razor` і `NotFound.razor`. Ці зміни я відкотив, бо курс працює зі статичним відтворенням і зайві режими лише додали б помилок.
+  - Для `Kind` (enum) генератор поставив `InputText`, і проєкт не збирався (CS1503). У `Create.razor` і `Edit.razor` поле замінено на `InputSelect` зі значеннями `Enum.GetValues<ExpenseKind>()`.
+- У меню додано пункт «Витрати» (`href="carexpenses"`).
+- Розбиття на сторінки зроблено посиланнями `?page=N` по 10 записів. Кнопковий `Paginator` за статичного відтворення не працює.
+- **Перевірка в браузері:** запис створюється через форму, редагується (сума змінилася на 175) і видаляється; при 13 записах є «Далі» і «Назад», друга сторінка показує записи 11–13.
+
+### П'ять місць створеного коду
+1. **`@page "/carexpenses"`** — адреса сторінки. Генератор утворив її від назви типу за власним правилом множини (`CarExpense` → `carexpenses`), тому адресу треба брати з `@page`, а не вгадувати.
+2. **Немає `@rendermode`** — сторінки відтворюються статично. Сервер формує HTML і забуває про сторінку, тож `@onclick` не спрацює; працюють лише посилання й надсилання форм.
+3. **`@inject IDbContextFactory<CarExpensesContext> DbFactory`** — сторінка не створює фабрику сама, а отримує її з контейнера служб, де її зареєстровано в `Program.cs` (`AddDbContextFactory`). Контекст створюється викликом `DbFactory.CreateDbContext()`.
+4. **`Items` у `QuickGrid`** отримує `IQueryable` (`context.CarExpenses…Skip…Take`), а не готовий список. Тому впорядкування й розбиття виконує база, а не застосунок.
+5. **`EditForm` з `FormName` і `[SupplyParameterFromForm]`** — після надсилання форми платформа заповнює властивість `CarExpense` введеними значеннями. `FormName` відрізняє форму серед інших, а `OnValidSubmit` викликає збереження лише тоді, коли перевірка пройшла; після збереження `NavigateTo("/carexpenses")` повертає до переліку.
+
+### Відповіді на «Перевірте себе»
+1. Генератор створює `Index` (перелік), `Create` (створення), `Details` (перегляд одного запису), `Edit` (зміна) і `Delete` (підтвердження видалення).
+2. Компонент переліку отримує запит, щоб відбір, впорядкування й розбиття передати базі, а не читати всю таблицю.
+3. Точна адреса стоїть у директиві `@page` у першому рядку `Index.razor`. Генератор утворює множину за власним правилом, тому за назвою типу її не вгадати.
+4. `[SupplyParameterFromQuery]` бере значення з `?page=N`. Кожне посилання відкриває нову адресу, а кнопки потребували б `@onclick`, який за статичного відтворення не працює.
+5. Меню лежить у `Components/Layout/NavMenu.razor`, що входить до макета `MainLayout`. Тому посилання додається один раз для всіх сторінок.
+6. Генератор не враховує, що літри потрібні лише для заправки, що наступне ТО має бути після дати витрати, і не має українських підписів. Він нічого не знає про предметну область.
+
 ## Джерела
 - https://learn.microsoft.com/aspnet/core/blazor/tutorials/movie-database-app/part-1
 - https://learn.microsoft.com/dotnet/core/tools/
@@ -63,4 +89,6 @@
 - https://learn.microsoft.com/ef/core/
 - https://learn.microsoft.com/ef/core/managing-schemas/migrations/
 - https://learn.microsoft.com/ef/core/providers/sqlite/limitations
+- https://learn.microsoft.com/aspnet/core/fundamentals/tools/dotnet-aspnet-codegenerator
+- https://learn.microsoft.com/aspnet/core/blazor/components/quickgrid
 - Використано AI-помічника (Claude) для пояснень і перевірки; кожен крок розібрано.

@@ -1,0 +1,60 @@
+@page "/carexpenses/details"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Models
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>CarExpense</h2>
+    <hr />
+    @if (carexpense is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@carexpense.Title</dd>
+            <dt class="col-sm-2">Kind</dt>
+            <dd class="col-sm-10">@carexpense.Kind</dd>
+            <dt class="col-sm-2">Amount</dt>
+            <dd class="col-sm-10">@carexpense.Amount</dd>
+            <dt class="col-sm-2">SpentOn</dt>
+            <dd class="col-sm-10">@carexpense.SpentOn</dd>
+            <dt class="col-sm-2">Odometer</dt>
+            <dd class="col-sm-10">@carexpense.Odometer</dd>
+            <dt class="col-sm-2">Liters</dt>
+            <dd class="col-sm-10">@carexpense.Liters</dd>
+            <dt class="col-sm-2">NextServiceOn</dt>
+            <dd class="col-sm-10">@carexpense.NextServiceOn</dd>
+            <dt class="col-sm-2">Comment</dt>
+            <dd class="col-sm-10">@carexpense.Comment</dd>
+        </dl>
+        <div>
+            <a href="@($"/carexpenses/edit?id={carexpense.Id}")">Edit</a> |
+            <a href="@($"/carexpenses")">Back to List</a>
+        </div>
+    }
+</div>
+
+@code {
+    private CarExpense? carexpense;
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        carexpense = await context.CarExpenses.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (carexpense is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+}

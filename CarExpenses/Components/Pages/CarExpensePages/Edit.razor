@@ -1,0 +1,129 @@
+@page "/carexpenses/edit"
+@using Microsoft.EntityFrameworkCore
+@using CarExpenses.Models
+@inject IDbContextFactory<CarExpenses.Data.CarExpensesContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit</PageTitle>
+
+<h1>Edit</h1>
+
+<h2>CarExpense</h2>
+<hr />
+@if (CarExpense is null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            <EditForm method="post" Model="CarExpense" OnValidSubmit="UpdateCarExpense" FormName="edit" Enhance>
+                <DataAnnotationsValidator />
+                <ValidationSummary role="alert"/>
+                <input type="hidden" name="CarExpense.Id" value="@CarExpense.Id" />
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title:</label>
+                    <InputText id="title" @bind-Value="CarExpense.Title" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.Title" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="kind" class="form-label">Kind:</label>
+                    <InputSelect id="kind" @bind-Value="CarExpense.Kind" class="form-select">
+                    @foreach (var kind in Enum.GetValues<ExpenseKind>())
+                    {
+                        <option value="@kind">@kind</option>
+                    }
+                </InputSelect>
+                    <ValidationMessage For="() => CarExpense.Kind" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Amount:</label>
+                    <InputNumber id="amount" @bind-Value="CarExpense.Amount" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.Amount" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="spenton" class="form-label">SpentOn:</label>
+                    <InputDate id="spenton" @bind-Value="CarExpense.SpentOn" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.SpentOn" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="odometer" class="form-label">Odometer:</label>
+                    <InputNumber id="odometer" @bind-Value="CarExpense.Odometer" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.Odometer" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="liters" class="form-label">Liters:</label>
+                    <InputNumber id="liters" @bind-Value="CarExpense.Liters" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.Liters" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="nextserviceon" class="form-label">NextServiceOn:</label>
+                    <InputDate id="nextserviceon" @bind-Value="CarExpense.NextServiceOn" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.NextServiceOn" class="text-danger" />
+                </div>
+                <div class="mb-3">
+                    <label for="comment" class="form-label">Comment:</label>
+                    <InputText id="comment" @bind-Value="CarExpense.Comment" class="form-control" />
+                    <ValidationMessage For="() => CarExpense.Comment" class="text-danger" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<div>
+    <a href="/carexpenses">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    [SupplyParameterFromForm]
+    private CarExpense? CarExpense { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        CarExpense ??= await context.CarExpenses.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (CarExpense is null)
+        {
+            NavigationManager.NotFound();
+        }
+    }
+
+    // To protect from overposting attacks, enable the specific properties you want to bind to.
+    // For more information, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task UpdateCarExpense()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(CarExpense!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!CarExpenseExists(CarExpense!.Id))
+            {
+                NavigationManager.NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/carexpenses");
+    }
+
+    private bool CarExpenseExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.CarExpenses.Any(e => e.Id == id);
+    }
+}
